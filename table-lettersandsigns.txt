@@ -1,4 +1,5 @@
-
+#Chars coded to VFD 2 byte format. Although Futaba single sign has three bytes, the last one is 0x00. 
+#Third byte bellow is used to find single char from string that has to be displayed - see findcharposition() 
 chars = [
 		[0x3f, 0xa2, "0"],
 		[0x06, 0x02, "1"],
