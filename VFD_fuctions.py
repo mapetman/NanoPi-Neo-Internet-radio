@@ -105,10 +105,6 @@ VFDreset()
 #Write chars to VFD
 for index in range(len(text)):
 	text1 = text[:index + 1]
-	#print "index: " 
-	#print index
-	#print text1
-	#print text1[-1:]
 	lit = findcharposition(text1[-1:])
 	bus.write_byte_data(ADDRESS, digit[index], chars[lit][0])
 	bus.write_byte_data(ADDRESS, digit[index] + 1, chars[lit][1])
