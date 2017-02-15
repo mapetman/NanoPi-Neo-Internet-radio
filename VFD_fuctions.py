@@ -1,19 +1,20 @@
-#!/usr/bin/python
+
 import smbus
 import time
-ADDRESS = 0x50        #address of VFD - IMPORTANT NOTE: according to datasheet it is wite only
-bus = smbus.SMBus(0)    #NanoPi NEO has I2c_0 and I2c_2, I2c_0 is connected to pins
+ADDRESS = 0x50
+bus = smbus.SMBus(0)    # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
 
-#Chars coded to VFD 2 byte format. Although Futaba single sign has three bytes, the last one is 0x00. 
-#Third byte bellow is used to find single char from string that has to be displayed - see findcharposition() 
+# digit number
+digit = [0xc0, 0xc0 + 0x03, 0xc0 + 0x06, 0xc0 + 0x09, 0xc0 + 0x0c, 0xc0 + 0x0f, 0xc0 + 0x12, 0xc0 + 0x15, 0xc0 + 0x18, 0xc0 + 0x1b, 0xc0 + 0x1e, 0xc0 + 0x21]
+
 chars = [
-		[0x3f, 0xa2, "0"],
+			[0x3f, 0xa2, "0"],
 			[0x06, 0x02, "1"],
 			[0x5b, 0x84, "2"],
-			[0x79, 0x84, "3"],
+			[0x4f, 0x84, "3"],
 			[0x66, 0x84, "4"],
 			[0x6d, 0x84, "5"],
-			[0x7d, 0x88, "6"],
+			[0x7d, 0x84, "6"],
 			[0x07, 0x00, "7"],
 			[0x7f, 0x84, "8"],
 			[0x6f, 0x84, "9"],
@@ -65,48 +66,48 @@ chars = [
 			[0x00, 0x01, "'"],
 			[0x00, 0x00, " "],
 		]
+               
 
+#resetowanie wyswietlacza VFD
+def clearVFD():
+        bus.write_byte(ADDRESS, 0x08)
+        bus.write_byte(ADDRESS, 0x44)
+        i = 0
+        while i < 12:
+                bus.write_byte_data(ADDRESS, digit[i], 0x00)
+                bus.write_byte_data(ADDRESS, digit[i] + 1, 0x00)
+                i += 1
 
-# digit number - static addresses of first byte of every single sign, VFD matrix is 1x12 
-digit = [0xc0, 0xc0 + 0x03, 0xc0 + 0x06, 0xc0 + 0x09, 0xc0 + 0x0c, 0xc0 + 0x0f, 0xc0 + 0x12, 0xc0 + 0x15, 0xc0 + 0x18, 0xc0 + 0x1b, 0xc0 + 0x1e, 0xc0 + 0x21]
+# def display(letter)
+#       letter = str(letter)
 
-#VFD reset - clears all data in VFD register (LED's not included)
-def clearVFD():	
-	bus.write_byte(ADDRESS, 0x08)
-	bus.write_byte(ADDRESS, 0x44)
-	i = 0
-	while i < 12:
-		bus.write_byte_data(ADDRESS, digit[i], 0x00)
-		bus.write_byte_data(ADDRESS, digit[i] + 1, 0x00)
-		i += 1
-
-#Function finds position in coded char table
 def findcharposition(char):
-	i = 0
-	while i < 57:
-			if chars[i][2] == str(char):
-				return i
-				break
-			i += 1
-	return "err"	
+        i = 0
+        while i < 56:
+                        if chars[i][2] == str(char):
+                                return i
+                                break
+                        i += 1
+        return "err"
 
+# zmiana liter napisu na wielkie
+text = "ABCDEFGHAIJKL"
 
+text3 = text.upper()
+text = text3
 
-#MAIN PART
-#Commands to set VFD to write without incrementation of address
-bus.write_byte(ADDRESS, 0x08)
-bus.write_byte(ADDRESS, 0x44)
-
-#Displayed text
-text = "M12A"
-
-VFDreset()
-
-#Write chars to VFD
-for index in range(len(text)):
-	text1 = text[:index + 1]
-	lit = findcharposition(text1[-1:])
-	bus.write_byte_data(ADDRESS, digit[index], chars[lit][0])
-	bus.write_byte_data(ADDRESS, digit[index] + 1, chars[lit][1])
-	bus.write_byte(ADDRESS, 0x9f)
-	time.sleep(0.25)
+clearVFD()
+for index1 in range(len(text)):
+        text1 = text[:index1 + 1]
+        time.sleep(0.15)
+        clearVFD()
+        index2 = len(text1)
+        index3 = 0
+        while index2 > 0:
+                text2 = text1[:index2]
+                lit = findcharposition(text2[-1])
+                bus.write_byte_data(ADDRESS, digit[index3], chars[lit][0])
+                bus.write_byte_data(ADDRESS, digit[index3] + 1, chars[lit][1])
+                bus.write_byte(ADDRESS, 0x9f)
+                index2 -= 1
+                index3 += 1
